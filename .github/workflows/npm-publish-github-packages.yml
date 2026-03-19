@@ -16,6 +16,8 @@ jobs:
         with:
           node-version: 16
       - run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.DIGIACCEL_PAT }}
       - run: npm run build --if-present
   bump-version:
     needs: build
@@ -62,6 +64,8 @@ jobs:
           registry-url: https://npm.pkg.github.com/
           scope: '@vishivish18'
       - run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.DIGIACCEL_PAT }}
       - run: npm run build --if-present
       - run: npm publish
         env:
