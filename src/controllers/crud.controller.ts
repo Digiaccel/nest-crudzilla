@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Patch, Req, UseGuards,HttpException , HttpStatus } from '@nestjs/common';
 import { CrudService } from '../services/crud.service';
 import mongoose from 'mongoose';
-import { GenerateORMFilter, ORMFilter, PaginationOption, PaginationQuery } from '@kartikyathakur/nestjs-query-filter';
+import { GenerateORMFilter, ORMFilter, PaginationOption, PaginationQuery } from '@digiaccel/nestjs-query-filter';
 import { plainToClass } from 'class-transformer';
 import { ValidationError, validateOrReject } from 'class-validator';
 
