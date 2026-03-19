@@ -1,0 +1,142 @@
+# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
+# For more information see: https://help.github.com/actions/language-and-framework-guides/publishing-nodejs-packages
+
+name: Node.js Package
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+      - run: npm ci
+      - run: npm run build --if-present
+  bump-version:
+    needs: build
+    name: 'Bump Version on master'
+    runs-on: ubuntu-latest
+    outputs:
+      newTag: ${{ steps.version-bump.outputs.newTag }} # Define the output
+    steps:
+      - name: 'Checkout source code'
+        uses: 'actions/checkout@v2'
+        with:
+          ref: ${{ github.ref }}
+      - name: 'cat package.json'
+        run: cat ./package.json
+      - name: 'Automated Version Bump'
+        id: version-bump
+        uses: 'phips28/gh-action-bump-version@master'
+        with:
+          tag-prefix: 'v'
+          minor-wording: 'add'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+           
+      - name: 'cat package.json'
+        run: cat ./package.json
+      - name: 'Output Step'
+        env:
+          NEW_TAG: ${{ steps.version-bump.outputs.newTag }}
+        run: echo "new tag $NEW_TAG"
+
+  publish-gpr:
+    needs: bump-version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      newTag: ${{ needs.bump-version.outputs.newTag }} # Pass the output along
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16
+          registry-url: https://npm.pkg.github.com/
+          scope: '@vishivish18'
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+  
+  send-to-slack:
+    runs-on: ubuntu-latest
+    name: Send build message to slack
+    needs: publish-gpr
+    steps:
+    - name: Send success notification payload to Slack Workflow Builder
+      if: ${{ success() }}
+      id: slack_success
+      uses: slackapi/slack-github-action@v1.19.0
+      with:
+        payload: |
+          {
+            "text": "Build successful for @Digiaccel/nestjs-query-filter",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "✅ nestjs-query-filter package build status: ${{ job.status }} for version ${{ needs.publish-gpr.outputs.newTag }}"
+                }
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+    - name: Send failure notification payload to Slack Workflow Builder
+      if: ${{ failure() }}
+      id: slack_failure
+      uses: slackapi/slack-github-action@v1.19.0
+      with:
+        payload: |
+          {
+            "text": "Build failed for @Digiaccel/nestjs-query-filter",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "❌ nestjs-query-filter package build status: ${{ job.status }} for version ${{ needs.publish-gpr.outputs.newTag }}"
+                }
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+  failure-notification:
+    runs-on: ubuntu-latest
+    if: always()  # Ensures this runs even if any job fails
+    needs: [build, bump-version, publish-gpr, send-to-slack] # Add all jobs
+    steps:
+      - name: 'Notify failure'
+        if: ${{ failure() }}  # Sends notification only if any job failed
+        uses: slackapi/slack-github-action@v1.19.0
+        with:
+          payload: |
+            {
+              "text": "🚨 Build failed for @Digiaccel/nestjs-query-filter",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "❌ *Failure in GitHub Actions Workflow!*\nCheck logs for details."
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
