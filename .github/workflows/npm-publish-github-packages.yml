@@ -15,7 +15,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 16
-          registry-url: https://npm.pkg.github.com
+          registry-url: https://npm.pkg.github.com/
       - run: npm ci
         env:
           NODE_AUTH_TOKEN: ${{ secrets.DIGIACCEL_PAT }}
@@ -38,7 +38,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 16
-          registry-url: https://npm.pkg.github.com
+          registry-url: https://npm.pkg.github.com/
 
       - run: npm ci
         env:
@@ -50,8 +50,8 @@ jobs:
         id: version-bump
         uses: phips28/gh-action-bump-version@master
         with:
-          tag-prefix: 'v'
-          minor-wording: 'add'
+          tag-prefix: v
+          minor-wording: add
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -71,7 +71,7 @@ jobs:
     if: always()
     steps:
       - name: Send success notification to Teams
-        if: ${{ needs.build.result == 'success' && needs.bump-and-publish.result == 'success' && secrets.MS_TEAMS_WEBHOOK_URL != '' }}
+        if: ${{ needs.build.result == 'success' && needs.bump-and-publish.result == 'success' }}
         run: |
           curl -X POST "${{ secrets.MS_TEAMS_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
@@ -97,7 +97,7 @@ jobs:
             }'
 
       - name: Send failure notification to Teams
-        if: ${{ (needs.build.result == 'failure' || needs.bump-and-publish.result == 'failure') && secrets.MS_TEAMS_WEBHOOK_URL != '' }}
+        if: ${{ needs.build.result == 'failure' || needs.bump-and-publish.result == 'failure' }}
         run: |
           curl -X POST "${{ secrets.MS_TEAMS_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
