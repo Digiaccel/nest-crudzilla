@@ -25,6 +25,10 @@
   "files": [
     "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Digiaccel/nest-crudzilla.git"
+  },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/Digiaccel"
   },
