@@ -2,7 +2,7 @@
   "name": "@digiaccel/nest-crudzilla",
   "originalAuthor": "Vishal Ranjan <vishivish18@gmail.com>",
   "author": "Vishal Ranjan <vishivish18@gmail.com>",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "description": "NestCRUDZilla is a powerful and intuitive package designed to streamline the implementation of CRUD (Create, Read, Update, Delete) functionality within NestJS applications. Say goodbye to repetitive code and tedious setup processes – NestCRUDMatic provides pre-built CrudController and CrudService components that can be easily integrated into your projects, allowing you to focus on building robust APIs and applications without the hassle of manual CRUD implementation",
   "keywords": [
     "NestJS",
