@@ -15,6 +15,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 16
+          registry-url: https://npm.pkg.github.com
       - run: npm ci
         env:
           NODE_AUTH_TOKEN: ${{ secrets.DIGIACCEL_PAT }}
@@ -37,7 +38,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 16
-          registry-url: https://npm.pkg.github.com/
+          registry-url: https://npm.pkg.github.com
 
       - run: npm ci
         env:
@@ -70,7 +71,7 @@ jobs:
     if: always()
     steps:
       - name: Send success notification to Teams
-        if: ${{ needs.build.result == 'success' && needs.bump-and-publish.result == 'success' }}
+        if: ${{ needs.build.result == 'success' && needs.bump-and-publish.result == 'success' && secrets.MS_TEAMS_WEBHOOK_URL != '' }}
         run: |
           curl -X POST "${{ secrets.MS_TEAMS_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
@@ -96,7 +97,7 @@ jobs:
             }'
 
       - name: Send failure notification to Teams
-        if: ${{ needs.build.result == 'failure' || needs.bump-and-publish.result == 'failure' }}
+        if: ${{ (needs.build.result == 'failure' || needs.bump-and-publish.result == 'failure') && secrets.MS_TEAMS_WEBHOOK_URL != '' }}
         run: |
           curl -X POST "${{ secrets.MS_TEAMS_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \

@@ -26,7 +26,7 @@
     "dist"
   ],
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/Digiaccel"
+    "registry": "https://npm.pkg.github.com"
   },
   "license": "ISC",
   "dependencies": {
