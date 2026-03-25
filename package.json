@@ -25,9 +25,12 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/Digiaccel"
+  },
   "license": "ISC",
   "dependencies": {
-    "@digiaccel/nestjs-query-filter": "^0.0.1",
+    "@digiaccel/nestjs-query-filter": "^0.0.6",
     "@nestjs/common": "^10.3.4",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
