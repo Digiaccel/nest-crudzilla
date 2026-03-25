@@ -63,76 +63,60 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.DIGIACCEL_PAT }}
 
-  send-to-slack:
+  send-to-teams:
     runs-on: ubuntu-latest
-    name: Send build message to slack
-    needs: bump-and-publish
-    steps:
-      - name: Send success notification payload to Slack Workflow Builder
-        if: ${{ success() }}
-        id: slack_success
-        uses: slackapi/slack-github-action@v1.19.0
-        with:
-          payload: |
-            {
-              "text": "Build successful for @Digiaccel/nestjs-query-filter",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "✅ nestjs-query-filter package build status: ${{ job.status }} for version ${{ needs.bump-and-publish.outputs.newTag }}"
-                  }
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-      - name: Send failure notification payload to Slack Workflow Builder
-        if: ${{ failure() }}
-        id: slack_failure
-        uses: slackapi/slack-github-action@v1.19.0
-        with:
-          payload: |
-            {
-              "text": "Build failed for @Digiaccel/nestjs-query-filter",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "❌ nestjs-query-filter package build status: ${{ job.status }} for version ${{ needs.bump-and-publish.outputs.newTag }}"
-                  }
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-
-  failure-notification:
-    runs-on: ubuntu-latest
+    name: Send build message to Teams
+    needs: [build, bump-and-publish]
     if: always()
-    needs: [build, bump-and-publish, send-to-slack]
     steps:
-      - name: Notify failure
-        if: ${{ failure() }}
-        uses: slackapi/slack-github-action@v1.19.0
-        with:
-          payload: |
-            {
-              "text": "🚨 Build failed for @Digiaccel/nestjs-query-filter",
-              "blocks": [
+      - name: Send success notification to Teams
+        if: ${{ needs.build.result == 'success' && needs.bump-and-publish.result == 'success' }}
+        run: |
+          curl -X POST "${{ secrets.MS_TEAMS_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "@type": "MessageCard",
+              "@context": "https://schema.org/extensions",
+              "summary": "nest-crudzilla build success",
+              "themeColor": "2EB886",
+              "title": "✅ nest-crudzilla package build successful",
+              "text": "Version: **${{ needs.bump-and-publish.outputs.newTag }}**<br/>Branch: **${{ github.ref_name }}**<br/>Repository: **${{ github.repository }}**",
+              "potentialAction": [
                 {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "❌ *Failure in GitHub Actions Workflow!*\nCheck logs for details."
-                  }
+                  "@type": "OpenUri",
+                  "name": "View Workflow Run",
+                  "targets": [
+                    {
+                      "os": "default",
+                      "uri": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
                 }
               ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+            }'
+
+      - name: Send failure notification to Teams
+        if: ${{ needs.build.result == 'failure' || needs.bump-and-publish.result == 'failure' }}
+        run: |
+          curl -X POST "${{ secrets.MS_TEAMS_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "@type": "MessageCard",
+              "@context": "https://schema.org/extensions",
+              "summary": "nest-crudzilla build failed",
+              "themeColor": "E01E5A",
+              "title": "❌ nest-crudzilla package build failed",
+              "text": "Repository: **${{ github.repository }}**<br/>Branch: **${{ github.ref_name }}**<br/>Please check the workflow logs.",
+              "potentialAction": [
+                {
+                  "@type": "OpenUri",
+                  "name": "View Workflow Run",
+                  "targets": [
+                    {
+                      "os": "default",
+                      "uri": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }'
